@@ -72,17 +72,17 @@ find_surface_at_position_recursive(struct wlc_pointer *pointer,
    struct wlc_subsurface *sub;
 
    wl_list_for_each(sub, &parent->subsurface_list, link) {
-       struct wlc_surface *subsurface = convert_from_wlc_resource(sub->surface_id, "surface");
-       if(!subsurface)
-           wlc_log(WLC_LOG_ERROR, "Invalid subsurface id %" PRIuWLC " parent %" PRIuWLC,
-                   convert_to_wlc_resource(subsurface), convert_to_wlc_resource(parent));
+      struct wlc_surface *subsurface = convert_from_wlc_resource(sub->surface_id, "surface");
+      if(!subsurface)
+         wlc_log(WLC_LOG_ERROR, "Invalid subsurface id %" PRIuWLC " parent %" PRIuWLC,
+                 convert_to_wlc_resource(subsurface), convert_to_wlc_resource(parent));
 
-       if(subsurface->commit.subsurface_position.x + offx <= pointer->pos.x &&
-          subsurface->commit.subsurface_position.y + offy <= pointer->pos.y &&
-          subsurface->commit.subsurface_position.x + subsurface->size.w + offx >= pointer->pos.x &&
-          subsurface->commit.subsurface_position.y + subsurface->size.h + offy >= pointer->pos.y)
+      if(subsurface->commit.subsurface_position.x + offx <= pointer->pos.x &&
+         subsurface->commit.subsurface_position.y + offy <= pointer->pos.y &&
+         subsurface->commit.subsurface_position.x + subsurface->size.w + offx >= pointer->pos.x &&
+         subsurface->commit.subsurface_position.y + subsurface->size.h + offy >= pointer->pos.y)
 
-           surface = subsurface;
+         surface = subsurface;
    }
 
    return (surface != parent ? find_surface_at_position_recursive(pointer, surface,
@@ -107,8 +107,8 @@ surface_under_pointer(struct wlc_pointer *pointer, struct wlc_output *output)
 
       struct wlc_geometry b;
       wlc_view_get_bounds(view, &b, NULL);
-      if (pointer->pos.x >= b.origin.x && pointer->pos.x <= b.origin.x + (int32_t)b.size.w &&
-          pointer->pos.y >= b.origin.y && pointer->pos.y <= b.origin.y + (int32_t)b.size.h) {
+      if(pointer->pos.x >= b.origin.x && pointer->pos.x <= b.origin.x + (int32_t)b.size.w &&
+         pointer->pos.y >= b.origin.y && pointer->pos.y <= b.origin.y + (int32_t)b.size.h) {
 
          struct wlc_surface *surface = convert_from_wlc_resource(view->surface, "surface");
          if(surface) {
