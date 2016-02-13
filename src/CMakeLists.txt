@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.4)
-
 add_definitions(
    -DWL_HIDE_DEPRECATED
    ${WAYLAND_DEFINITIONS}
