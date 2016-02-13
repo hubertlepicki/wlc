@@ -1,6 +1,10 @@
 #ifndef _WLC_RESOURCES_H_
 #define _WLC_RESOURCES_H_
 
+#ifdef YCM
+#define WLC_FILE ""
+#endif
+
 #include <wlc/wlc.h>
 #include <stdint.h>
 #include <stdbool.h>

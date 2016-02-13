@@ -14,8 +14,12 @@
 static void
 wl_cb_subsurface_set_position(struct wl_client *client, struct wl_resource *resource, int32_t x, int32_t y)
 {
-   (void)client, (void)resource, (void)x, (void)y;
-   STUBL(resource);
+   (void)client;
+   struct wlc_surface *surface;
+   if (!(surface = convert_from_wlc_resource((wlc_resource)wl_resource_get_user_data(resource), "surface")))
+      return;
+
+   surface->pending.subsurface_position = (struct wlc_point){x, y};
 }
 
 static void
@@ -87,7 +91,22 @@ wl_cb_subcompositor_get_subsurface(struct wl_client *client, struct wl_resource 
       return;
 
    wlc_resource_implement(r, &wl_subsurface_implementation, (void*)surface);
-   wlc_surface_set_parent(convert_from_wlc_resource(surface, "surface"), convert_from_wlc_resource(parent, "surface"));
+
+   struct wlc_surface *subsurface = convert_from_wlc_resource(surface, "surface"),
+                      *parent_surface = convert_from_wlc_resource(parent, "surface");
+
+   struct wlc_subsurface *sub = malloc(sizeof(struct wlc_subsurface));
+
+   /* XXX: maybe we should post error message? */
+   if(!sub) return;
+
+   sub->surface_id = surface;
+   wl_list_insert(&parent_surface->subsurface_list, &sub->link);
+
+   subsurface->output = parent_surface->output;
+   subsurface->view = parent_surface->view;
+
+   wlc_surface_set_parent(subsurface, parent_surface);
 }
 
 static void

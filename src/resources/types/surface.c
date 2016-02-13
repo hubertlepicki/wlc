@@ -52,6 +52,8 @@ commit_state(struct wlc_surface *surface, struct wlc_surface_state *pending, str
       pending->attached = false;
    }
 
+   out->subsurface_position = pending->subsurface_position;
+
    state_set_buffer(out, convert_from_wlc_resource(pending->buffer, "buffer"));
    state_set_buffer(pending, NULL);
 
@@ -298,7 +300,26 @@ wlc_surface_release(struct wlc_surface *surface)
    struct wlc_surface_event ev = { .surface = surface, .type = WLC_SURFACE_EVENT_DESTROYED };
    wl_signal_emit(&wlc_system_signals()->surface, &ev);
 
-   wlc_handle_release(surface->view);
+   struct wlc_subsurface *sub;
+
+   if(!surface->parent)
+      wlc_handle_release(surface->view);
+   else {
+       struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
+       wlc_resource surface_id = convert_to_wlc_resource(surface);
+
+       wl_list_for_each(sub, &parent->subsurface_list, link) {
+           if(sub->surface_id == surface_id)
+               break;
+       }
+
+       wl_list_remove(&sub->link);
+   }
+
+   wl_list_for_each(sub, &surface->subsurface_list, link) {
+       wlc_surface_release(convert_from_wlc_resource(sub->surface_id, "surface"));
+   }
+
    wlc_surface_invalidate(surface);
 
    release_state(&surface->commit);
@@ -320,6 +341,9 @@ wlc_surface(struct wlc_surface *surface)
    if (!chck_iter_pool(&surface->commit.frame_cbs, 4, 0, sizeof(wlc_resource)) ||
        !chck_iter_pool(&surface->pending.frame_cbs, 4, 0, sizeof(wlc_resource)))
       goto fail;
+
+   wl_list_init(&surface->subsurface_list);
+   surface->pending.subsurface_position = (struct wlc_point){0, 0};
 
    return true;
 

@@ -18,10 +18,16 @@ struct wlc_surface_state {
    pixman_region32_t input;
    pixman_region32_t damage;
    struct wlc_point offset;
+   struct wlc_point subsurface_position;
    wlc_resource buffer;
    int32_t scale;
    enum wl_output_transform transform;
    bool attached;
+};
+
+struct wlc_subsurface {
+    wlc_resource surface_id;
+    struct wl_list link;
 };
 
 struct wlc_surface {
@@ -32,6 +38,9 @@ struct wlc_surface {
 
    /* Parent surface for subsurface interface */
    wlc_resource parent;
+
+   /* list of subsurfaces */
+   struct wl_list subsurface_list;
 
    /* Set if this surface is bind to view */
    wlc_handle view;

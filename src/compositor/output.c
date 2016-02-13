@@ -234,6 +234,44 @@ finish_frame_tasks(struct wlc_output *output)
 }
 
 static void
+render_subsurface(struct wlc_output *output, struct wlc_surface *surface,
+        int32_t dx, int32_t dy) {
+   struct wlc_geometry g = (struct wlc_geometry) {
+       {dx + surface->commit.subsurface_position.x + surface->commit.offset.x,
+        dy + surface->commit.subsurface_position.y + surface->commit.offset.y},
+       surface->size
+   };
+
+   wlc_render_surface_paint(&output->render, &output->context, surface, &g);
+}
+
+static void
+subsurfaces_render(struct wlc_output *output,
+        struct wlc_surface *surface,
+        struct chck_iter_pool *callbacks, int32_t dx, int32_t dy) {
+
+   if(!surface)
+       return;
+
+   /* do not render view's main surface twice */
+   if(surface->parent)
+       render_subsurface(output, surface, dx, dy);
+
+   struct wlc_subsurface *sub;
+
+   wl_list_for_each(sub, &surface->subsurface_list, link) {
+       subsurfaces_render(output, convert_from_wlc_resource(sub->surface_id, "surface"), callbacks,
+               dx + (surface->parent ? 0 : surface->commit.subsurface_position.x),
+               dy + (surface->parent ? 0 : surface->commit.subsurface_position.y));
+   }
+
+   wlc_resource *r;
+   chck_iter_pool_for_each(&surface->commit.frame_cbs, r)
+      chck_iter_pool_push_back(callbacks, r);
+   chck_iter_pool_flush(&surface->commit.frame_cbs);
+}
+
+static void
 render_view(struct wlc_output *output, struct wlc_view *view, struct chck_iter_pool *callbacks)
 {
    assert(output && callbacks);
@@ -248,14 +286,15 @@ render_view(struct wlc_output *output, struct wlc_view *view, struct chck_iter_p
    WLC_INTERFACE_EMIT(view.render.pre, convert_to_wlc_handle(view));
    wlc_render_flush_fakefb(&output->render, &output->context);
    wlc_view_commit_state(view, &view->pending, &view->commit);
+
    wlc_render_view_paint(&output->render, &output->context, view);
+
+   struct wlc_geometry b;
+   wlc_view_get_bounds(view, &b, NULL);
+   subsurfaces_render(output, surface, callbacks, b.origin.x, b.origin.y);
+
    WLC_INTERFACE_EMIT(view.render.post, convert_to_wlc_handle(view));
    wlc_render_flush_fakefb(&output->render, &output->context);
-
-   wlc_resource *r;
-   chck_iter_pool_for_each(&surface->commit.frame_cbs, r)
-      chck_iter_pool_push_back(callbacks, r);
-   chck_iter_pool_flush(&surface->commit.frame_cbs);
 }
 
 static bool
