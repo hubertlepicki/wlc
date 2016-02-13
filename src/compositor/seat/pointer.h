@@ -35,9 +35,7 @@ struct wlc_pointer_origin {
 // for more info see wlc_pointer_focus
 struct wlc_focused_surface {
     wlc_resource id;
-    int32_t dx;
-    int32_t dy;
-
+    struct wlc_point offset;
     float scale_w, scale_h;
 };
 

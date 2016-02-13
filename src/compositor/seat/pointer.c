@@ -64,9 +64,7 @@ view_visible(struct wlc_view *view, uint32_t mask)
 }
 
 static struct wlc_focused_surface
-find_surface_at_position_recursive(struct wlc_pointer *pointer,
-       struct wlc_surface *parent,
-       int32_t offx, int32_t offy) {
+find_surface_at_position_recursive(struct wlc_pointer *pointer, struct wlc_surface *parent, int32_t offx, int32_t offy) {
 
    struct wlc_surface *surface = parent;
    struct wlc_subsurface *sub;
@@ -88,7 +86,7 @@ find_surface_at_position_recursive(struct wlc_pointer *pointer,
    return (surface != parent ? find_surface_at_position_recursive(pointer, surface,
                offx + surface->commit.subsurface_position.x,
                offy + surface->commit.subsurface_position.y) :
-           (struct wlc_focused_surface){convert_to_wlc_resource(surface), offx, offy, 1, 1});
+           (struct wlc_focused_surface){convert_to_wlc_resource(surface), {offx, offy}, 1, 1});
 }
 
 static struct wlc_focused_surface
@@ -97,7 +95,7 @@ surface_under_pointer(struct wlc_pointer *pointer, struct wlc_output *output)
    assert(pointer);
 
    if (!output)
-      return (struct wlc_focused_surface){0, 0, 0, 0, 0};
+      return (struct wlc_focused_surface){0, {0, 0}, 0, 0};
 
    wlc_handle *h;
    chck_iter_pool_for_each_reverse(&output->views, h) {
@@ -122,7 +120,7 @@ surface_under_pointer(struct wlc_pointer *pointer, struct wlc_output *output)
       }
    }
 
-   return (struct wlc_focused_surface){0, 0, 0, 0, 0};
+   return (struct wlc_focused_surface){0, {0, 0}, 0, 0};
 }
 
 static void
@@ -138,8 +136,7 @@ pointer_paint(struct wlc_pointer *pointer, struct wlc_output *output)
    // geometry changed then update pointer.
    struct wlc_focused_surface focused = surface_under_pointer(pointer, output);
 
-   pointer->focused.surface.dx = focused.dx;
-   pointer->focused.surface.dy = focused.dy;
+   pointer->focused.surface.offset = focused.offset;
    pointer->focused.surface.scale_w = focused.scale_w;
    pointer->focused.surface.scale_h = focused.scale_h;
 
@@ -249,8 +246,8 @@ wlc_pointer_focus(struct wlc_pointer *pointer, struct wlc_surface *surface, stru
 
    if (surface) {
 
-      d.x = (pointer->pos.x - pointer->focused.surface.dx) * pointer->focused.surface.scale_w;
-      d.y = (pointer->pos.y - pointer->focused.surface.dy) * pointer->focused.surface.scale_h;
+      d.x = (pointer->pos.x - pointer->focused.surface.offset.x) * pointer->focused.surface.scale_w;
+      d.y = (pointer->pos.y - pointer->focused.surface.offset.y) * pointer->focused.surface.scale_h;
 
       d.x = chck_clamp(d.x, 0, surface->size.w);
       d.y = chck_clamp(d.y, 0, surface->size.h);
