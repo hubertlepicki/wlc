@@ -25,11 +25,6 @@ struct wlc_surface_state {
    bool attached;
 };
 
-struct wlc_subsurface {
-    wlc_resource surface_id;
-    struct wl_list link;
-};
-
 struct wlc_coordinate_scale {
    double w, h;
 };
@@ -45,7 +40,7 @@ struct wlc_surface {
    wlc_resource parent;
 
    /* list of subsurfaces */
-   struct wl_list subsurface_list;
+   struct chck_iter_pool subsurface_list;
 
    /* Set if this surface is bind to view */
    wlc_handle view;

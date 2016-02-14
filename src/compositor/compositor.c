@@ -95,14 +95,7 @@ wl_cb_subcompositor_get_subsurface(struct wl_client *client, struct wl_resource 
    struct wlc_surface *subsurface = convert_from_wlc_resource(surface, "surface"),
                       *parent_surface = convert_from_wlc_resource(parent, "surface");
 
-   struct wlc_subsurface *sub = malloc(sizeof(struct wlc_subsurface));
-
-   /* XXX: maybe we should post error message? */
-   if (!sub)
-      return;
-
-   sub->surface_id = surface;
-   wl_list_insert(&parent_surface->subsurface_list, &sub->link);
+   chck_iter_pool_push_front(&parent_surface->subsurface_list, &surface);
 
    subsurface->output = parent_surface->output;
    subsurface->view = parent_surface->view;

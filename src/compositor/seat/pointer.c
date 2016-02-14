@@ -67,10 +67,10 @@ static void
 find_surface_at_position_recursive(struct wlc_pointer *pointer, struct wlc_surface *parent, struct wlc_focused_surface *out) {
 
    struct wlc_surface *surface = parent;
-   struct wlc_subsurface *sub;
+   wlc_resource *sub;
 
-   wl_list_for_each(sub, &parent->subsurface_list, link) {
-      struct wlc_surface *subsurface = convert_from_wlc_resource(sub->surface_id, "surface");
+   chck_iter_pool_for_each(&parent->subsurface_list, sub) {
+      struct wlc_surface *subsurface = convert_from_wlc_resource(*sub, "surface");
       if(!subsurface) {
          wlc_log(WLC_LOG_ERROR, "Invalid subsurface id %" PRIuWLC " parent %" PRIuWLC,
                  convert_to_wlc_resource(subsurface), convert_to_wlc_resource(parent));

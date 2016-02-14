@@ -254,10 +254,10 @@ subsurfaces_render(struct wlc_output *output, struct wlc_surface *surface, struc
    if(surface->parent)
        render_subsurface(output, surface, offset, parent_scale);
 
-   struct wlc_subsurface *sub;
+   wlc_resource *sub;
 
-   wl_list_for_each(sub, &surface->subsurface_list, link) {
-       subsurfaces_render(output, convert_from_wlc_resource(sub->surface_id, "surface"), surface->scale,
+   chck_iter_pool_for_each(&surface->subsurface_list, sub) {
+       subsurfaces_render(output, convert_from_wlc_resource(*sub, "surface"), surface->scale,
              callbacks,
              (struct wlc_point) {
               offset.x + (surface->parent ? 0 : surface->commit.subsurface_position.x / parent_scale.w),

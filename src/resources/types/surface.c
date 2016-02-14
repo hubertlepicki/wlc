@@ -300,24 +300,25 @@ wlc_surface_release(struct wlc_surface *surface)
    struct wlc_surface_event ev = { .surface = surface, .type = WLC_SURFACE_EVENT_DESTROYED };
    wl_signal_emit(&wlc_system_signals()->surface, &ev);
 
-   struct wlc_subsurface *sub;
+   wlc_resource *sub;
 
    if(!surface->parent) {
       wlc_handle_release(surface->view);
    } else {
-       struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
-       wlc_resource surface_id = convert_to_wlc_resource(surface);
 
-       wl_list_for_each(sub, &parent->subsurface_list, link) {
-           if(sub->surface_id == surface_id)
-               break;
-       }
+      struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
+      wlc_resource surface_id = convert_to_wlc_resource(surface);
 
-       wl_list_remove(&sub->link);
+      chck_iter_pool_for_each(&parent->subsurface_list, sub) {
+         if(*sub == surface_id) {
+            chck_iter_pool_remove(&parent->subsurface_list, _I - 1);
+            break;
+         }
+      }
    }
 
-   wl_list_for_each(sub, &surface->subsurface_list, link) {
-       wlc_surface_release(convert_from_wlc_resource(sub->surface_id, "surface"));
+   chck_iter_pool_for_each(&surface->subsurface_list, sub) {
+       wlc_surface_release(convert_from_wlc_resource(*sub, "surface"));
    }
 
    wlc_surface_invalidate(surface);
@@ -339,10 +340,10 @@ wlc_surface(struct wlc_surface *surface)
       goto fail;
 
    if (!chck_iter_pool(&surface->commit.frame_cbs, 4, 0, sizeof(wlc_resource)) ||
-       !chck_iter_pool(&surface->pending.frame_cbs, 4, 0, sizeof(wlc_resource)))
+       !chck_iter_pool(&surface->pending.frame_cbs, 4, 0, sizeof(wlc_resource)) ||
+       !chck_iter_pool(&surface->subsurface_list, 4, 0, sizeof(wlc_resource)))
       goto fail;
 
-   wl_list_init(&surface->subsurface_list);
    surface->pending.subsurface_position = (struct wlc_point){0, 0};
    surface->scale = (struct wlc_coordinate_scale) {1, 1};
 
