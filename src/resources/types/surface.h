@@ -30,11 +30,16 @@ struct wlc_subsurface {
     struct wl_list link;
 };
 
+struct wlc_coordinate_scale {
+   double w, h;
+};
+
 struct wlc_surface {
    struct wlc_source buffers, callbacks;
    struct wlc_surface_state pending;
    struct wlc_surface_state commit;
    struct wlc_size size;
+   struct wlc_coordinate_scale scale;
 
    /* Parent surface for subsurface interface */
    wlc_resource parent;

@@ -302,9 +302,9 @@ wlc_surface_release(struct wlc_surface *surface)
 
    struct wlc_subsurface *sub;
 
-   if(!surface->parent)
+   if(!surface->parent) {
       wlc_handle_release(surface->view);
-   else {
+   } else {
        struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
        wlc_resource surface_id = convert_to_wlc_resource(surface);
 
@@ -344,6 +344,7 @@ wlc_surface(struct wlc_surface *surface)
 
    wl_list_init(&surface->subsurface_list);
    surface->pending.subsurface_position = (struct wlc_point){0, 0};
+   surface->scale = (struct wlc_coordinate_scale) {1, 1};
 
    return true;
 

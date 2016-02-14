@@ -234,10 +234,10 @@ finish_frame_tasks(struct wlc_output *output)
 }
 
 static void
-render_subsurface(struct wlc_output *output, struct wlc_surface *surface, struct wlc_point offset) {
+render_subsurface(struct wlc_output *output, struct wlc_surface *surface, struct wlc_point offset, struct wlc_coordinate_scale parent_scale) {
    struct wlc_geometry g = (struct wlc_geometry) {
-       .origin = {offset.x + surface->commit.subsurface_position.x + surface->commit.offset.x,
-                  offset.y + surface->commit.subsurface_position.y + surface->commit.offset.y},
+       .origin = {offset.x + parent_scale.w * (surface->commit.subsurface_position.x + surface->commit.offset.x),
+                  offset.y + parent_scale.h * (surface->commit.subsurface_position.y + surface->commit.offset.y)},
        .size = surface->size
    };
 
@@ -245,25 +245,24 @@ render_subsurface(struct wlc_output *output, struct wlc_surface *surface, struct
 }
 
 static void
-subsurfaces_render(struct wlc_output *output,
-        struct wlc_surface *surface,
-        struct chck_iter_pool *callbacks, struct wlc_point offset) {
+subsurfaces_render(struct wlc_output *output, struct wlc_surface *surface, struct wlc_coordinate_scale parent_scale, struct chck_iter_pool *callbacks, struct wlc_point offset) {
 
    if(!surface)
        return;
 
    /* do not render view's main surface twice */
    if(surface->parent)
-       render_subsurface(output, surface, offset);
+       render_subsurface(output, surface, offset, parent_scale);
 
    struct wlc_subsurface *sub;
 
    wl_list_for_each(sub, &surface->subsurface_list, link) {
-       subsurfaces_render(output, convert_from_wlc_resource(sub->surface_id, "surface"), callbacks,
-               (struct wlc_point) {
-               offset.x + (surface->parent ? 0 : surface->commit.subsurface_position.x),
-               offset.y + (surface->parent ? 0 : surface->commit.subsurface_position.y)
-               });
+       subsurfaces_render(output, convert_from_wlc_resource(sub->surface_id, "surface"), surface->scale,
+             callbacks,
+             (struct wlc_point) {
+              offset.x + (surface->parent ? 0 : surface->commit.subsurface_position.x / parent_scale.w),
+              offset.y + (surface->parent ? 0 : surface->commit.subsurface_position.y / parent_scale.h)
+             });
    }
 
    wlc_resource *r;
@@ -292,7 +291,7 @@ render_view(struct wlc_output *output, struct wlc_view *view, struct chck_iter_p
 
    struct wlc_geometry b;
    wlc_view_get_bounds(view, &b, NULL);
-   subsurfaces_render(output, surface, callbacks, b.origin);
+   subsurfaces_render(output, surface, (struct wlc_coordinate_scale) {1, 1}, callbacks, b.origin);
 
    WLC_INTERFACE_EMIT(view.render.post, convert_to_wlc_handle(view));
    wlc_render_flush_fakefb(&output->render, &output->context);
