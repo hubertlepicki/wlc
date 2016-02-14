@@ -7,10 +7,6 @@
 #include <chck/pool/pool.h>
 #include <wayland-server.h>
 
-#ifdef YCM
-#define WLC_FILE ""
-#endif
-
 typedef uintptr_t wlc_resource;
 
 /** Storage for handles / resources. */
