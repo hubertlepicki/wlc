@@ -321,6 +321,8 @@ wlc_surface_release(struct wlc_surface *surface)
        wlc_surface_release(convert_from_wlc_resource(*sub, "surface"));
    }
 
+   chck_iter_pool_release(&surface->subsurface_list);
+
    wlc_surface_invalidate(surface);
 
    release_state(&surface->commit);

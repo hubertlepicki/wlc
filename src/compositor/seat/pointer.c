@@ -192,13 +192,15 @@ out:
    chck_iter_pool_flush(&pointer->focused.resources);
    pointer->focused.surface.id = 0;
    pointer->focused.view = 0;
-   wlc_pointer_set_surface(pointer, NULL, &wlc_point_zero);
 }
 
 static void
-focus_view(struct wlc_pointer *pointer, struct wlc_surface *surf, const struct wlc_pointer_origin *pos)
+focus_view(struct wlc_pointer *pointer, struct wlc_surface *surf, wlc_handle old_focus, const struct wlc_pointer_origin *pos)
 {
    assert(pointer);
+
+   if(!surf || surf->view != old_focus)
+        wlc_pointer_set_surface(pointer, NULL, &wlc_point_zero);
 
    struct wl_resource *surface;
    if (!surf || !(surface = convert_to_wl_resource(surf, "surface")))
@@ -233,7 +235,6 @@ wlc_pointer_focus(struct wlc_pointer *pointer, struct wlc_surface *surface, stru
       memcpy(out_pos, &d, sizeof(d));
 
    if (surface) {
-      printf("Scale is %f %f\n", surface->scale.w, surface->scale.h);
       d.x = (pointer->pos.x - pointer->focused.surface.offset.x) / surface->scale.w;
       d.y = (pointer->pos.y - pointer->focused.surface.offset.y) / surface->scale.h;
 
@@ -249,8 +250,9 @@ wlc_pointer_focus(struct wlc_pointer *pointer, struct wlc_surface *surface, stru
 
    wlc_dlog(WLC_DBG_FOCUS, "-> pointer focus event %" PRIuWLC ", %" PRIuWLC, pointer->focused.surface.id, convert_to_wlc_resource(surface));
 
+   wlc_handle old_focused_view = pointer->focused.view;
    defocus(pointer);
-   focus_view(pointer, surface, &d);
+   focus_view(pointer, surface, old_focused_view, &d);
 }
 
 void

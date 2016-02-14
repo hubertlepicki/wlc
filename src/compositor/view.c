@@ -19,7 +19,8 @@ configure_view(struct wlc_view *view, uint32_t edges, const struct wlc_geometry 
    assert(view && g);
 
    struct wlc_surface *surface = convert_from_wlc_resource(view->surface, "surface");
-   if(surface) {
+   /* we need scale only for visible surface */
+   if(surface && surface->size.w * surface->size.h > 0) {
       surface->scale.w = (float)(g->size.w) / surface->size.w;
       surface->scale.h = (float)(g->size.h) / surface->size.h;
    }
