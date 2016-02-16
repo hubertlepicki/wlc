@@ -13,8 +13,6 @@
 #include "resources/types/shell-surface.h"
 #include "resources/types/surface.h"
 
-int cnt = 0;
-
 static void
 configure_view(struct wlc_view *view, uint32_t edges, const struct wlc_geometry *g)
 {
@@ -27,12 +25,6 @@ configure_view(struct wlc_view *view, uint32_t edges, const struct wlc_geometry 
       surface->coordinate_transform.w = (float)(g->size.w) / surface->size.w;
       surface->coordinate_transform.h = (float)(g->size.h) / surface->size.h;
    }
-
-   wlc_handle vi = convert_to_wlc_handle(view);
-
-   if(vi == 2) cnt++;
-   //if(cnt == 3) return;
-   printf("configure view %"PRIuWLC "\n", convert_to_wlc_handle(view));
 
    struct wl_resource *r;
    if (view->xdg_surface && (r = wl_resource_from_wlc_resource(view->xdg_surface, "xdg-surface"))) {
