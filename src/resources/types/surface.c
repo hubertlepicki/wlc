@@ -317,10 +317,7 @@ wlc_surface_release(struct wlc_surface *surface)
       }
    }
 
-   chck_iter_pool_for_each(&surface->subsurface_list, sub) {
-       wlc_surface_release(convert_from_wlc_resource(*sub, "surface"));
-   }
-
+   chck_iter_pool_for_each_call(&surface->subsurface_list, wlc_resource_release_ptr);
    chck_iter_pool_release(&surface->subsurface_list);
 
    wlc_surface_invalidate(surface);
@@ -347,7 +344,7 @@ wlc_surface(struct wlc_surface *surface)
       goto fail;
 
    surface->pending.subsurface_position = (struct wlc_point){0, 0};
-   surface->scale = (struct wlc_coordinate_scale) {1, 1};
+   surface->coordinate_transform = (struct wlc_coordinate_scale) {1, 1};
 
    return true;
 

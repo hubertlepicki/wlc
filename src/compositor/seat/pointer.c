@@ -76,19 +76,19 @@ find_surface_at_position_recursive(struct wlc_pointer *pointer, struct wlc_surfa
                  convert_to_wlc_resource(subsurface), convert_to_wlc_resource(parent));
       }
 
-      if(subsurface->commit.subsurface_position.x * parent->scale.w + out->offset.x <= pointer->pos.x &&
-         subsurface->commit.subsurface_position.y * parent->scale.h + out->offset.y <= pointer->pos.y &&
-         subsurface->commit.subsurface_position.x * parent->scale.w + subsurface->size.w + out->offset.x >= pointer->pos.x &&
-         subsurface->commit.subsurface_position.y * parent->scale.h + subsurface->size.h + out->offset.y >= pointer->pos.y)
-
+      if(subsurface->commit.subsurface_position.x * parent->coordinate_transform.w + out->offset.x <= pointer->pos.x &&
+            subsurface->commit.subsurface_position.y * parent->coordinate_transform.h + out->offset.y <= pointer->pos.y &&
+            subsurface->commit.subsurface_position.x * parent->coordinate_transform.w + subsurface->size.w + out->offset.x >= pointer->pos.x &&
+            subsurface->commit.subsurface_position.y * parent->coordinate_transform.h + subsurface->size.h + out->offset.y >= pointer->pos.y) {
          surface = subsurface;
+      }
    }
 
    if(surface == parent) {
       out->id = convert_to_wlc_resource(surface);
    } else {
-      out->offset.x += surface->commit.subsurface_position.x * parent->scale.w;
-      out->offset.y += surface->commit.subsurface_position.y * parent->scale.h;
+      out->offset.x += surface->commit.subsurface_position.x * parent->coordinate_transform.w;
+      out->offset.y += surface->commit.subsurface_position.y * parent->coordinate_transform.h;
       find_surface_at_position_recursive(pointer, surface, out);
    }
 }
@@ -96,9 +96,9 @@ find_surface_at_position_recursive(struct wlc_pointer *pointer, struct wlc_surfa
 static bool
 surface_under_pointer(struct wlc_pointer *pointer, struct wlc_output *output, struct wlc_focused_surface *out)
 {
-   assert(pointer);
+   assert(pointer && out);
 
-   if (!output || !out)
+   if (!output)
       return false;
 
    wlc_handle *h;
@@ -235,8 +235,8 @@ wlc_pointer_focus(struct wlc_pointer *pointer, struct wlc_surface *surface, stru
       memcpy(out_pos, &d, sizeof(d));
 
    if (surface) {
-      d.x = (pointer->pos.x - pointer->focused.surface.offset.x) / surface->scale.w;
-      d.y = (pointer->pos.y - pointer->focused.surface.offset.y) / surface->scale.h;
+      d.x = (pointer->pos.x - pointer->focused.surface.offset.x) / surface->coordinate_transform.w;
+      d.y = (pointer->pos.y - pointer->focused.surface.offset.y) / surface->coordinate_transform.h;
 
       d.x = chck_clamp(d.x, 0, surface->size.w);
       d.y = chck_clamp(d.y, 0, surface->size.h);
@@ -265,7 +265,6 @@ wlc_pointer_button(struct wlc_pointer *pointer, uint32_t time, uint32_t button, 
    except((seat = wl_container_of(pointer, seat, pointer)) && (compositor = wl_container_of(seat, compositor, seat)));
 
    // Special handling for popups
-
    if (seat->keyboard.focused.view != pointer->focused.view) {
       struct wlc_view *v;
       if ((v = convert_from_wlc_handle(seat->keyboard.focused.view, "view")) && !v->x11.id && (v->type & WLC_BIT_POPUP)) {
@@ -306,7 +305,6 @@ wlc_pointer_scroll(struct wlc_pointer *pointer, uint32_t time, uint8_t axis_bits
 
       if (axis_bits & WLC_SCROLL_AXIS_VERTICAL)
          wl_pointer_send_axis(wr, time, WL_POINTER_AXIS_VERTICAL_SCROLL, wl_fixed_from_double(amount[0]));
-
       if (axis_bits & WLC_SCROLL_AXIS_HORIZONTAL)
          wl_pointer_send_axis(wr, time, WL_POINTER_AXIS_HORIZONTAL_SCROLL, wl_fixed_from_double(amount[1]));
    }

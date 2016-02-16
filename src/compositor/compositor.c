@@ -58,8 +58,10 @@ wl_cb_subsurface_set_desync(struct wl_client *client, struct wl_resource *resour
    if (!(surface = convert_from_wlc_resource((wlc_resource)wl_resource_get_user_data(resource), "surface")))
       return;
 
-   if (surface)
+   if (surface) {
       surface->synchronized = false;
+      surface->commit.subsurface_position = surface->pending.subsurface_position;
+   }
 }
 
 static const struct wl_subsurface_interface wl_subsurface_implementation = {

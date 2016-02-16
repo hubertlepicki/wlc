@@ -34,7 +34,7 @@ struct wlc_surface {
    struct wlc_surface_state pending;
    struct wlc_surface_state commit;
    struct wlc_size size;
-   struct wlc_coordinate_scale scale;
+   struct wlc_coordinate_scale coordinate_transform;
 
    /* Parent surface for subsurface interface */
    wlc_resource parent;

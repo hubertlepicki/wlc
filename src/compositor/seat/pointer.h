@@ -27,11 +27,6 @@ struct wlc_view;
 struct wlc_pointer_origin {
    double x, y;
 };
-// struct for keeping the focused surface
-// used because we cannot otherwise determine the position
-// of a subsurface without going all the way to the toplevel view
-// scale_w and scale_h are used only when the focused surface is the surface of the view
-// for more info see wlc_pointer_focus
 
 struct wlc_focused_surface {
     wlc_resource id;
