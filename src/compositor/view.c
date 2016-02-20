@@ -13,13 +13,10 @@
 #include "resources/types/shell-surface.h"
 #include "resources/types/surface.h"
 
-int cnt = 0;
-
 static void
 configure_view(struct wlc_view *view, uint32_t edges, const struct wlc_geometry *g)
 {
    assert(view && g);
-
 
    struct wlc_surface *surface = convert_from_wlc_resource(view->surface, "surface");
    /* we need scale only for visible surface */
@@ -28,20 +25,12 @@ configure_view(struct wlc_view *view, uint32_t edges, const struct wlc_geometry 
       surface->coordinate_transform.h = (float)(g->size.h) / surface->size.h;
    }
 
-   wlc_handle vi = convert_to_wlc_handle(view);
-
-   if(vi == 2) cnt++;
-   //if(cnt == 3) return;
-   printf("configure view %"PRIuWLC "\n", convert_to_wlc_handle(view));
-
    struct wl_resource *r;
    if (view->xdg_surface && (r = wl_resource_from_wlc_resource(view->xdg_surface, "xdg-surface"))) {
       const uint32_t serial = wl_display_next_serial(wlc_display());
       struct wl_array states = { .size = view->wl_state.items.used, .alloc = view->wl_state.items.allocated, .data = view->wl_state.items.buffer };
-      printf("xdg config\n");
       xdg_surface_send_configure(r, g->size.w, g->size.h, &states, serial);
    } else if (view->shell_surface && (r = wl_resource_from_wlc_resource(view->shell_surface, "shell-surface"))) {
-      printf("shell surface\n");
       wl_shell_surface_send_configure(r, edges, g->size.w, g->size.h);
    } else if (view->x11.id) {
       wlc_x11_window_configure(&view->x11, g);

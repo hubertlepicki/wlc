@@ -69,7 +69,7 @@ struct wlc_surface {
       SURFACE_Y_XUXV,
    } format;
 
-   bool synchronized;
+   bool synchronized, parent_synchronized;
 };
 
 struct wlc_buffer* wlc_surface_get_buffer(struct wlc_surface *surface);
@@ -78,6 +78,7 @@ bool wlc_surface_attach_to_output(struct wlc_surface *surface, struct wlc_output
 void wlc_surface_set_parent(struct wlc_surface *surface, struct wlc_surface *parent);
 void wlc_surface_invalidate(struct wlc_surface *surface);
 void wlc_surface_release(struct wlc_surface *surface);
+void wlc_surface_commit(struct wlc_surface *surface);
 WLC_NONULL bool wlc_surface(struct wlc_surface *surface);
 
 const struct wl_surface_interface* wlc_surface_implementation(void);

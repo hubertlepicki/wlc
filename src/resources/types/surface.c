@@ -187,6 +187,19 @@ wl_cb_surface_set_input_region(struct wl_client *client, struct wl_resource *res
 }
 
 static void
+commit_subsurface_state(struct wlc_surface *surface) {
+   if (!surface) return;
+
+   commit_state(surface, &surface->pending, &surface->commit);
+   wlc_output_schedule_repaint(convert_from_wlc_handle(surface->output, "output"));
+   wlc_dlog(WLC_DBG_RENDER, "-> Commit request");
+
+   wlc_resource *r;
+   chck_iter_pool_for_each(&surface->subsurface_list, r)
+      commit_subsurface_state(convert_from_wlc_resource(*r, "surface"));
+}
+
+static void
 wl_cb_surface_commit(struct wl_client *client, struct wl_resource *resource)
 {
    (void)client;
@@ -195,9 +208,11 @@ wl_cb_surface_commit(struct wl_client *client, struct wl_resource *resource)
    if (!(surface = convert_from_wl_resource(resource, "surface")))
       return;
 
-   commit_state(surface, &surface->pending, &surface->commit);
-   wlc_output_schedule_repaint(convert_from_wlc_handle(surface->output, "output"));
-   wlc_dlog(WLC_DBG_RENDER, "-> Commit request");
+   if (surface->parent_synchronized || surface->synchronized) {
+      return;
+   } else {
+      commit_subsurface_state(surface);
+   }
 }
 
 static void
@@ -345,6 +360,7 @@ wlc_surface(struct wlc_surface *surface)
 
    surface->pending.subsurface_position = (struct wlc_point){0, 0};
    surface->coordinate_transform = (struct wlc_coordinate_scale) {1, 1};
+   surface->parent_synchronized = false;
 
    return true;
 

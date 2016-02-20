@@ -37,6 +37,16 @@ wl_cb_subsurface_place_below(struct wl_client *client, struct wl_resource *resou
 }
 
 static void
+recursive_set_subsurface_sync_state(struct wlc_surface *surface, bool state) {
+   if (!surface || surface->synchronized) return;
+   surface->parent_synchronized = state;
+
+   wlc_resource *r;
+   chck_iter_pool_for_each(&surface->subsurface_list, r)
+      recursive_set_subsurface_sync_state(convert_from_wlc_resource(*r, "surface"), state);
+}
+
+static void
 wl_cb_subsurface_set_sync(struct wl_client *client, struct wl_resource *resource)
 {
    (void)client;
@@ -45,8 +55,10 @@ wl_cb_subsurface_set_sync(struct wl_client *client, struct wl_resource *resource
    if (!(surface = convert_from_wlc_resource((wlc_resource)wl_resource_get_user_data(resource), "surface")))
       return;
 
-   if (surface)
+   if (surface) {
       surface->synchronized = true;
+      recursive_set_subsurface_sync_state(surface, true);
+   }
 }
 
 static void
@@ -60,7 +72,7 @@ wl_cb_subsurface_set_desync(struct wl_client *client, struct wl_resource *resour
 
    if (surface) {
       surface->synchronized = false;
-      surface->commit.subsurface_position = surface->pending.subsurface_position;
+      recursive_set_subsurface_sync_state(surface, false);
    }
 }
 
