@@ -195,8 +195,11 @@ commit_subsurface_state(struct wlc_surface *surface) {
    wlc_dlog(WLC_DBG_RENDER, "-> Commit request");
 
    wlc_resource *r;
-   chck_iter_pool_for_each(&surface->subsurface_list, r)
-      commit_subsurface_state(convert_from_wlc_resource(*r, "surface"));
+   chck_iter_pool_for_each(&surface->subsurface_list, r) {
+      struct wlc_surface *sub = convert_from_wlc_resource(*r, "surface");
+      if(sub->synchronized || sub->parent_synchronized)
+         commit_subsurface_state(sub);
+   }
 }
 
 static void
@@ -342,6 +345,11 @@ wlc_surface_release(struct wlc_surface *surface)
 
    wlc_source_release(&surface->buffers);
    wlc_source_release(&surface->callbacks);
+}
+
+void wlc_surface_commit(struct wlc_surface *surface) {
+   assert(surface);
+   commit_state(surface, &surface->pending, &surface->commit);
 }
 
 bool
