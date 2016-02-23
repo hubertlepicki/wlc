@@ -299,7 +299,30 @@ wlc_surface_set_parent(struct wlc_surface *surface, struct wlc_surface *parent)
    if (!surface)
       return;
 
-   surface->parent = convert_to_wlc_resource(parent);
+   const wlc_resource newp = convert_to_wlc_resource(parent);
+   if (surface->parent == newp)
+      return;
+
+   struct wlc_surface *p;
+   if ((p = convert_from_wlc_resource(surface->parent, "surface"))) {
+      wlc_resource *sub;
+      const wlc_resource surface_id = convert_to_wlc_resource(surface);
+      chck_iter_pool_for_each(&p->subsurface_list, sub) {
+         if (*sub != surface_id)
+            continue;
+
+         chck_iter_pool_remove(&p->subsurface_list, _I - 1);
+         break;
+      }
+   }
+
+   const wlc_resource r = convert_to_wlc_resource(surface);
+   if (parent && chck_iter_pool_push_front(&parent->subsurface_list, &r)) {
+      wlc_surface_attach_to_output(surface, convert_from_wlc_handle(parent->output, "output"), wlc_surface_get_buffer(surface));
+      surface->parent = newp;
+   } else {
+      surface->parent = 0;
+   }
 }
 
 void
@@ -320,22 +343,8 @@ wlc_surface_release(struct wlc_surface *surface)
    struct wlc_surface_event ev = { .surface = surface, .type = WLC_SURFACE_EVENT_DESTROYED };
    wl_signal_emit(&wlc_system_signals()->surface, &ev);
 
-   wlc_resource *sub;
-
-   if(!surface->parent) {
-      wlc_handle_release(surface->view);
-   } else {
-
-      struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
-      wlc_resource surface_id = convert_to_wlc_resource(surface);
-
-      chck_iter_pool_for_each(&parent->subsurface_list, sub) {
-         if(*sub == surface_id) {
-            chck_iter_pool_remove(&parent->subsurface_list, _I - 1);
-            break;
-         }
-      }
-   }
+   wlc_handle_release(surface->view);
+   wlc_surface_set_parent(surface, NULL);
 
    chck_iter_pool_for_each_call(&surface->subsurface_list, wlc_resource_release_ptr);
    chck_iter_pool_release(&surface->subsurface_list);

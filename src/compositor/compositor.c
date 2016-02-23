@@ -147,16 +147,7 @@ wl_cb_subcompositor_get_subsurface(struct wl_client *client, struct wl_resource 
       return;
 
    wlc_resource_implement(r, &wl_subsurface_implementation, (void*)surface);
-
-   struct wlc_surface *subsurface = convert_from_wlc_resource(surface, "surface"),
-                      *parent_surface = convert_from_wlc_resource(parent, "surface");
-
-   chck_iter_pool_push_front(&parent_surface->subsurface_list, &surface);
-
-   subsurface->output = parent_surface->output;
-   subsurface->view = parent_surface->view;
-
-   wlc_surface_set_parent(subsurface, parent_surface);
+   wlc_surface_set_parent(convert_from_wlc_resource(surface, "surface"), convert_from_wlc_resource(parent, "surface"));
 }
 
 static void
