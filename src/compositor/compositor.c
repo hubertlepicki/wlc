@@ -26,14 +26,67 @@ static void
 wl_cb_subsurface_place_above(struct wl_client *client, struct wl_resource *resource, struct wl_resource *sibling_resource)
 {
    (void)client, (void)resource, (void)sibling_resource;
-   STUBL(resource);
+
+   wlc_resource surface_res = (wlc_resource)wl_resource_get_user_data(resource);
+   wlc_resource sibling_res = (wlc_resource)wl_resource_get_user_data(sibling_resource);
+
+   struct wlc_surface *surface;
+   if (!(surface = convert_from_wlc_resource(surface_res, "surface")))
+      return;
+
+   int surface_idx = -1, target_idx = -1;
+   struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
+
+   wlc_resource *sub;
+   chck_iter_pool_for_each(&parent->subsurface_list, sub) {
+      if (*sub == surface_res)
+         surface_idx = _I - 1;
+
+      if (*sub == sibling_res)
+         target_idx = _I - 1;
+   }
+
+   if (surface_idx == -1 || target_idx == -1)
+      return;
+
+   if(surface_idx < target_idx) --target_idx;
+
+   chck_iter_pool_remove(&parent->subsurface_list, surface_idx);
+   chck_iter_pool_insert(&parent->subsurface_list, target_idx, &surface_res);
 }
 
 static void
 wl_cb_subsurface_place_below(struct wl_client *client, struct wl_resource *resource, struct wl_resource *sibling_resource)
 {
    (void)client, (void)resource, (void)sibling_resource;
-   STUBL(resource);
+
+
+   wlc_resource surface_res = (wlc_resource)wl_resource_get_user_data(resource);
+   wlc_resource sibling_res = (wlc_resource)wl_resource_get_user_data(sibling_resource);
+
+   struct wlc_surface *surface;
+   if (!(surface = convert_from_wlc_resource(surface_res, "surface")))
+      return;
+
+   int surface_idx = -1, target_idx = -1;
+   struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
+
+   wlc_resource *sub;
+   chck_iter_pool_for_each(&parent->subsurface_list, sub) {
+      if (*sub == surface_res)
+         surface_idx = _I - 1;
+
+      if (*sub == sibling_res)
+         target_idx = _I - 1;
+   }
+
+   if (surface_idx == -1 || target_idx == -1)
+      return;
+
+   if(surface_idx < target_idx) --target_idx;
+
+   chck_iter_pool_remove(&parent->subsurface_list, surface_idx);
+   chck_iter_pool_insert(&parent->subsurface_list, target_idx, &surface_res);
 }
 
 static void
