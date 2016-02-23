@@ -52,8 +52,6 @@ commit_state(struct wlc_surface *surface, struct wlc_surface_state *pending, str
       pending->attached = false;
    }
 
-   out->subsurface_position = pending->subsurface_position;
-
    state_set_buffer(out, convert_from_wlc_resource(pending->buffer, "buffer"));
    state_set_buffer(pending, NULL);
 
@@ -197,6 +195,10 @@ commit_subsurface_state(struct wlc_surface *surface) {
    wlc_resource *r;
    chck_iter_pool_for_each(&surface->subsurface_list, r) {
       struct wlc_surface *sub = convert_from_wlc_resource(*r, "surface");
+      if(!sub)
+         return;
+
+      sub->commit.subsurface_position = sub->pending.subsurface_position;
       if(sub->synchronized || sub->parent_synchronized)
          commit_subsurface_state(sub);
    }
