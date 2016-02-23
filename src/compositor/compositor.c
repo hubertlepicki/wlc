@@ -23,6 +23,35 @@ wl_cb_subsurface_set_position(struct wl_client *client, struct wl_resource *reso
 }
 
 static void
+restack_subsurface_relative_to(wlc_resource surface, wlc_resource sibling, int32_t offset)
+{
+
+   int32_t surface_idx = -1, target_idx = -1;
+
+   struct wlc_surface *surface_ptr;
+   if (!(surface_ptr = convert_from_wlc_resource(surface, "surface")))
+      return;
+
+   struct wlc_surface *parent = convert_from_wlc_resource(surface_ptr->parent, "surface");
+   wlc_resource *sub;
+   chck_iter_pool_for_each(&parent->subsurface_list, sub) {
+      if (*sub == surface)
+         surface_idx = _I - 1;
+
+      if (*sub == sibling)
+         target_idx = _I - 1;
+   }
+
+   if (surface_idx == -1 || target_idx == -1)
+      return;
+
+   if(surface_idx < target_idx) --target_idx;
+
+   chck_iter_pool_remove(&parent->subsurface_list, surface_idx);
+   chck_iter_pool_insert(&parent->subsurface_list, target_idx + offset, &surface);
+}
+
+static void
 wl_cb_subsurface_place_above(struct wl_client *client, struct wl_resource *resource, struct wl_resource *sibling_resource)
 {
    (void)client, (void)resource, (void)sibling_resource;
@@ -30,29 +59,7 @@ wl_cb_subsurface_place_above(struct wl_client *client, struct wl_resource *resou
    wlc_resource surface_res = (wlc_resource)wl_resource_get_user_data(resource);
    wlc_resource sibling_res = (wlc_resource)wl_resource_get_user_data(sibling_resource);
 
-   struct wlc_surface *surface;
-   if (!(surface = convert_from_wlc_resource(surface_res, "surface")))
-      return;
-
-   int surface_idx = -1, target_idx = -1;
-   struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
-
-   wlc_resource *sub;
-   chck_iter_pool_for_each(&parent->subsurface_list, sub) {
-      if (*sub == surface_res)
-         surface_idx = _I - 1;
-
-      if (*sub == sibling_res)
-         target_idx = _I - 1;
-   }
-
-   if (surface_idx == -1 || target_idx == -1)
-      return;
-
-   if(surface_idx < target_idx) --target_idx;
-
-   chck_iter_pool_remove(&parent->subsurface_list, surface_idx);
-   chck_iter_pool_insert(&parent->subsurface_list, target_idx, &surface_res);
+   restack_subsurface_relative_to(surface_res, sibling_res, 0);
 }
 
 static void
@@ -60,33 +67,10 @@ wl_cb_subsurface_place_below(struct wl_client *client, struct wl_resource *resou
 {
    (void)client, (void)resource, (void)sibling_resource;
 
-
    wlc_resource surface_res = (wlc_resource)wl_resource_get_user_data(resource);
    wlc_resource sibling_res = (wlc_resource)wl_resource_get_user_data(sibling_resource);
 
-   struct wlc_surface *surface;
-   if (!(surface = convert_from_wlc_resource(surface_res, "surface")))
-      return;
-
-   int surface_idx = -1, target_idx = -1;
-   struct wlc_surface *parent = convert_from_wlc_resource(surface->parent, "surface");
-
-   wlc_resource *sub;
-   chck_iter_pool_for_each(&parent->subsurface_list, sub) {
-      if (*sub == surface_res)
-         surface_idx = _I - 1;
-
-      if (*sub == sibling_res)
-         target_idx = _I - 1;
-   }
-
-   if (surface_idx == -1 || target_idx == -1)
-      return;
-
-   if(surface_idx < target_idx) --target_idx;
-
-   chck_iter_pool_remove(&parent->subsurface_list, surface_idx);
-   chck_iter_pool_insert(&parent->subsurface_list, target_idx, &surface_res);
+   restack_subsurface_relative_to(surface_res, sibling_res, 1);
 }
 
 static void

@@ -195,11 +195,11 @@ commit_subsurface_state(struct wlc_surface *surface) {
    wlc_resource *r;
    chck_iter_pool_for_each(&surface->subsurface_list, r) {
       struct wlc_surface *sub = convert_from_wlc_resource(*r, "surface");
-      if(!sub)
-         return;
+      if (!sub)
+         continue;
 
       sub->commit.subsurface_position = sub->pending.subsurface_position;
-      if(sub->synchronized || sub->parent_synchronized)
+      if (sub->synchronized || sub->parent_synchronized)
          commit_subsurface_state(sub);
    }
 }
