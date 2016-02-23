@@ -185,8 +185,10 @@ wl_cb_surface_set_input_region(struct wl_client *client, struct wl_resource *res
 }
 
 static void
-commit_subsurface_state(struct wlc_surface *surface) {
-   if (!surface) return;
+commit_subsurface_state(struct wlc_surface *surface)
+{
+   if (!surface)
+      return;
 
    commit_state(surface, &surface->pending, &surface->commit);
    wlc_output_schedule_repaint(convert_from_wlc_handle(surface->output, "output"));
@@ -194,8 +196,8 @@ commit_subsurface_state(struct wlc_surface *surface) {
 
    wlc_resource *r;
    chck_iter_pool_for_each(&surface->subsurface_list, r) {
-      struct wlc_surface *sub = convert_from_wlc_resource(*r, "surface");
-      if (!sub)
+      struct wlc_surface *sub;
+      if (!(sub = convert_from_wlc_resource(*r, "surface")))
          continue;
 
       sub->commit.subsurface_position = sub->pending.subsurface_position;
@@ -358,7 +360,9 @@ wlc_surface_release(struct wlc_surface *surface)
    wlc_source_release(&surface->callbacks);
 }
 
-void wlc_surface_commit(struct wlc_surface *surface) {
+void
+wlc_surface_commit(struct wlc_surface *surface)
+{
    assert(surface);
    commit_state(surface, &surface->pending, &surface->commit);
 }
