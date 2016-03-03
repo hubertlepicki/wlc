@@ -66,29 +66,31 @@ view_visible(struct wlc_view *view, uint32_t mask)
 static void
 find_surface_at_position_recursive(struct wlc_pointer *pointer, struct wlc_surface *parent, struct wlc_focused_surface *out)
 {
-
-   struct wlc_surface *surface = parent;
    wlc_resource *sub;
-
    chck_iter_pool_for_each(&parent->subsurface_list, sub) {
-      struct wlc_surface *subsurface = convert_from_wlc_resource(*sub, "surface");
-      if (!subsurface)
+      struct wlc_surface *subsurface;
+      if (!(subsurface = convert_from_wlc_resource(*sub, "surface")))
+         continue;
+
+      int32_t dx = subsurface->commit.subsurface_position.x * parent->coordinate_transform.w;
+      int32_t dy = subsurface->commit.subsurface_position.y * parent->coordinate_transform.h;
+
+      out->offset.x += dx;
+      out->offset.y += dy;
+      find_surface_at_position_recursive(pointer, subsurface, out);
+
+      if (out->id)
          return;
 
-      if(subsurface->commit.subsurface_position.x * parent->coordinate_transform.w + out->offset.x <= pointer->pos.x &&
-            subsurface->commit.subsurface_position.y * parent->coordinate_transform.h + out->offset.y <= pointer->pos.y &&
-            subsurface->commit.subsurface_position.x * parent->coordinate_transform.w + subsurface->size.w + out->offset.x >= pointer->pos.x &&
-            subsurface->commit.subsurface_position.y * parent->coordinate_transform.h + subsurface->size.h + out->offset.y >= pointer->pos.y) {
-         surface = subsurface;
+      if (out->offset.x <= pointer->pos.x && out->offset.y <= pointer->pos.y &&
+            subsurface->size.w + out->offset.x >= pointer->pos.x &&
+            subsurface->size.h + out->offset.y >= pointer->pos.y) {
+         out->id = *sub;
+         return;
       }
-   }
 
-   if(surface == parent) {
-      out->id = convert_to_wlc_resource(surface);
-   } else {
-      out->offset.x += surface->commit.subsurface_position.x * parent->coordinate_transform.w;
-      out->offset.y += surface->commit.subsurface_position.y * parent->coordinate_transform.h;
-      find_surface_at_position_recursive(pointer, surface, out);
+      out->offset.x -= dx;
+      out->offset.y -= dy;
    }
 }
 
@@ -100,6 +102,8 @@ surface_under_pointer(struct wlc_pointer *pointer, struct wlc_output *output, st
    if (!output)
       return false;
 
+   out->id = 0;
+
    wlc_handle *h;
    chck_iter_pool_for_each_reverse(&output->views, h) {
       struct wlc_view *view;
@@ -108,13 +112,18 @@ surface_under_pointer(struct wlc_pointer *pointer, struct wlc_output *output, st
 
       struct wlc_geometry b;
       wlc_view_get_bounds(view, &b, NULL);
-      if (pointer->pos.x >= b.origin.x && pointer->pos.x <= b.origin.x + (int32_t)b.size.w &&
-         pointer->pos.y >= b.origin.y && pointer->pos.y <= b.origin.y + (int32_t)b.size.h) {
 
-         struct wlc_surface *surface = convert_from_wlc_resource(view->surface, "surface");
-         if (surface) {
-            out->offset = b.origin;
-            find_surface_at_position_recursive(pointer, surface, out);
+      struct wlc_surface *surface;
+      if ((surface = convert_from_wlc_resource(view->surface, "surface"))) {
+         out->offset = b.origin;
+         find_surface_at_position_recursive(pointer, surface, out);
+
+         if (out->id) {
+            return true;
+         } else if (b.origin.x <= pointer->pos.x && b.origin.y <= pointer->pos.y &&
+                    surface->size.w + b.origin.x >= pointer->pos.x &&
+                    surface->size.h + b.origin.y >= pointer->pos.y) {
+            out->id = view->surface;
             return true;
          }
       }
