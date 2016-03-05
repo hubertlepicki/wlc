@@ -127,6 +127,8 @@ wlc_view_commit_state(struct wlc_view *view, struct wlc_view_state *pending, str
       configure_view(view, pending->edges, &pending->geometry);
 
    *out = *pending;
+   wlc_surface_update_coordinate_transform(surface);
+
    wlc_dlog(WLC_DBG_COMMIT, "=> commit view %" PRIuWLC, convert_to_wlc_handle(view));
 }
 
