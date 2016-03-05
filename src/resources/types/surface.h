@@ -82,7 +82,6 @@ void wlc_surface_set_parent(struct wlc_surface *surface, struct wlc_surface *par
 void wlc_surface_invalidate(struct wlc_surface *surface);
 void wlc_surface_release(struct wlc_surface *surface);
 void wlc_surface_commit(struct wlc_surface *surface);
-void wlc_surface_update_coordinate_transform(struct wlc_surface *surface);
 WLC_NONULL bool wlc_surface(struct wlc_surface *surface);
 
 const struct wl_surface_interface* wlc_surface_implementation(void);

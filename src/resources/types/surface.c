@@ -277,21 +277,6 @@ wlc_surface_attach_to_view(struct wlc_surface *surface, struct wlc_view *view)
    wlc_view_set_surface(view, surface);
 }
 
-void wlc_surface_update_coordinate_transform(struct wlc_surface *surface)
-{
-   assert(surface);
-
-   struct wlc_view *view;
-   if (surface->view && surface->size.w * surface->size.h > 0 &&
-         (view = convert_from_wlc_handle(surface->view, "view"))) {
-      struct wlc_geometry geom, visible;
-      wlc_view_get_bounds(view, &geom, &visible);
-
-      surface->coordinate_transform.w = (float)(visible.size.w) / surface->size.w;
-      surface->coordinate_transform.h = (float)(visible.size.h) / surface->size.h;
-   }
-}
-
 bool
 wlc_surface_attach_to_output(struct wlc_surface *surface, struct wlc_output *output, struct wlc_buffer *buffer)
 {
@@ -306,8 +291,6 @@ wlc_surface_attach_to_output(struct wlc_surface *surface, struct wlc_output *out
       size = buffer->size;
 
    surface->size = size;
-   wlc_surface_update_coordinate_transform(surface);
-
    surface->commit.attached = (buffer ? true : false);
    return true;
 }
